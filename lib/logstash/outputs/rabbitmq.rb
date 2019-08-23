@@ -6,7 +6,7 @@ java_import com.rabbitmq.client.AlreadyClosedException
 
 # Push events to a RabbitMQ exchange. Requires RabbitMQ 2.x
 # or later version (3.x is recommended).
-# 
+#
 # Relevant links:
 #
 # * http://www.rabbitmq.com/[RabbitMQ]
@@ -17,7 +17,7 @@ module LogStash
       include LogStash::PluginMixins::RabbitMQConnection
 
       config_name "rabbitmq"
-      
+
       concurrency :shared
 
       # The default codec for this plugin is JSON. You can override this to suit your particular needs however.
@@ -43,9 +43,16 @@ module LogStash
       # Properties to be passed along with the message
       config :message_properties, :validate => :hash, :default => {}
 
+      # If true the exchange will be passively declared, meaning it must
+      # already exist on the server. To have Logstash create the exchange
+      # if necessary leave this option as false. If actively declaring
+      # an exchange that already exists, the exchange options for this plugin
+      # (durable etc) must match those of the existing exchange.
+      config :passive, :validate => :boolean, :default => false
+
       def register
         connect!
-        @hare_info.exchange = declare_exchange!(@hare_info.channel, @exchange, @exchange_type, @durable)
+        @hare_info.exchange = declare_exchange!(@hare_info.channel, @exchange, @exchange_type, @durable, @passive)
         # The connection close should close all channels, so it is safe to store thread locals here without closing them
         @thread_local_channel = java.lang.ThreadLocal.new
         @thread_local_exchange = java.lang.ThreadLocal.new
